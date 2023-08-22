@@ -26,7 +26,7 @@ namespace PasswordValidator
         static bool IsValidPassword(string line, out int charCount)
         {
             charCount = 0;
-            
+
             string[] parts = line.Split(':');
             if (parts.Length != 2)
             {
@@ -35,20 +35,46 @@ namespace PasswordValidator
 
             string requirementPart = parts[0].Trim();
             string passwordPart = parts[1].Trim();
-            
+
+            if (TryParseRequirement(requirementPart, out char requiredChar, out int minCount, out int maxCount))
+            {
+                charCount = CountOccurrences(passwordPart, requiredChar);
+                return charCount >= minCount && charCount <= maxCount;
+            }
+
+            return false;
+        }
+
+        static bool TryParseRequirement(string requirementPart, out char requiredChar, out int minCount, out int maxCount)
+        {
+            requiredChar = '\0';
+            minCount = 0;
+            maxCount = 0;
+
             Match match = Regex.Match(requirementPart, @"(\w)\s+(\d+)-(\d+)");
             if (!match.Success)
             {
                 return false;
             }
 
-            char requiredChar = match.Groups[1].Value[0];
-            int minCount = int.Parse(match.Groups[2].Value);
-            int maxCount = int.Parse(match.Groups[3].Value);
-            
-            charCount = passwordPart.Split(requiredChar).Length - 1;
-            
-            return charCount >= minCount && charCount <= maxCount;
+            requiredChar = match.Groups[1].Value[0];
+            minCount = int.Parse(match.Groups[2].Value);
+            maxCount = int.Parse(match.Groups[3].Value);
+
+            return true;
+        }
+
+        static int CountOccurrences(string input, char target)
+        {
+            int count = 0;
+            foreach (char c in input)
+            {
+                if (c == target)
+                {
+                    count++;
+                }
+            }
+            return count;
         }
         
     }
